@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: campusmarket
+    runtime: php
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader --no-interaction
+      npm install --legacy-peer-deps
+      npm run build
+      php artisan config:clear
+    startCommand: |
+      php artisan migrate --force
+      php artisan db:seed --force
+      php artisan storage:link
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+      php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_NAME
+        value: CampusMarket
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FILESYSTEM_DISK
+        value: local
