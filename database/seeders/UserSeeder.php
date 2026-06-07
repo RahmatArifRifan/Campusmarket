@@ -11,11 +11,13 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Admin
-        User::create([
-            'name'     => 'Admin CampusMarket',
-            'email'    => 'admin@campusmarket.com',
-            'password' => Hash::make('password'),
-            'role'     => 'admin',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@campusmarket.com'],
+            [
+                'name'     => 'Admin CampusMarket',
+                'password' => Hash::make('password'),
+                'role'     => 'admin',
+            ]
+        );
     }
 }
