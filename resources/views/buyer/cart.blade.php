@@ -120,6 +120,38 @@
       <i class="fas fa-info-circle"></i> Checkout dilakukan per toko — klik tombol di masing-masing toko
     </p>
 
+    {{-- BULK CHECKOUT --}}
+    <div style="margin-top:16px;padding:16px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:12px">
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;text-align:center">
+        <i class="fas fa-bolt" style="color:var(--primary-light)"></i> Atau checkout semua toko sekaligus
+      </p>
+      <div class="payment-options" style="margin-bottom:12px" id="bulkPaymentOptions">
+        <label class="payment-option selected" style="cursor:pointer" onclick="setBulkPayment(this)">
+          <input type="radio" name="bulk_payment" value="tunai" checked style="display:none"/>
+          <i class="fas fa-money-bill-wave"></i>
+          <div><span>Tunai</span></div>
+        </label>
+        <label class="payment-option" style="cursor:pointer" onclick="setBulkPayment(this)">
+          <input type="radio" name="bulk_payment" value="qris" style="display:none"/>
+          <i class="fas fa-qrcode"></i>
+          <div><span>QRIS</span></div>
+        </label>
+        <label class="payment-option" style="cursor:pointer" onclick="setBulkPayment(this)">
+          <input type="radio" name="bulk_payment" value="transfer" style="display:none"/>
+          <i class="fas fa-university"></i>
+          <div><span>Transfer</span></div>
+        </label>
+      </div>
+      <form method="POST" action="{{ route('buyer.checkout.bulk') }}" id="bulkCheckoutForm">
+        @csrf
+        <input type="hidden" name="payment_method" id="bulkPaymentMethod" value="tunai"/>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:14px"
+          onclick="return confirm('Checkout semua {{ count($storeGroups) }} toko sekaligus?')">
+          <i class="fas fa-bolt"></i> Checkout Semua ({{ count($storeGroups) }} Toko)
+        </button>
+      </form>
+    </div>
+
     <form method="POST" action="{{ route('buyer.cart.clear') }}" style="margin-top:12px">
       @csrf
       <button type="submit" class="btn btn-danger" style="width:100%" onclick="return confirm('Kosongkan semua keranjang?')">
@@ -141,6 +173,11 @@ function stepQty(btn, dir) {
     input.value = val;
     form.submit();
   }
+}
+function setBulkPayment(label) {
+  document.querySelectorAll('#bulkPaymentOptions .payment-option').forEach(o => o.classList.remove('selected'));
+  label.classList.add('selected');
+  document.getElementById('bulkPaymentMethod').value = label.querySelector('input').value;
 }
 document.querySelectorAll('.payment-option').forEach(opt => {
   opt.addEventListener('click', function () {

@@ -38,6 +38,7 @@ Route::middleware(['auth', 'role:buyer'])->prefix('buyer')->name('buyer.')->grou
     Route::post('/cart/clear-store',  [BuyerController::class, 'clearStoreCart'])->name('cart.clear-store');
     Route::get('/checkout',           [BuyerController::class, 'checkout'])->name('checkout');
     Route::post('/checkout',          [BuyerController::class, 'processCheckout'])->name('checkout.process');
+    Route::post('/checkout/bulk',     [BuyerController::class, 'processBulkCheckout'])->name('checkout.bulk');
     Route::get('/orders',             [BuyerController::class, 'orders'])->name('orders');
     Route::get('/orders/{order}/qr',  [BuyerController::class, 'showQr'])->name('orders.qr');
 });

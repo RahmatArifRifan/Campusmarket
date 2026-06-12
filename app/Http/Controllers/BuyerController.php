@@ -308,4 +308,83 @@ class BuyerController extends Controller
         $order->load('store', 'items.product');
         return view('buyer.qr', compact('order'));
     }
+
+    // ===== BULK CHECKOUT =====
+    public function processBulkCheckout(Request $request)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:tunai,qris,transfer',
+        ]);
+
+        $cart = session()->get('cart', []);
+        if (empty($cart)) return redirect()->route('buyer.cart');
+
+        $orderIds = [];
+
+        DB::transaction(function () use ($cart, $request, &$orderIds) {
+            $user = Auth::user();
+
+            foreach ($cart as $storeKey => $storeData) {
+                $total = 0;
+                $items = [];
+
+                foreach ($storeData['items'] as $productId => $qty) {
+                    $product = Product::lockForUpdate()->findOrFail($productId);
+                    $product->reduceStock($qty);
+                    $subtotal = $product->price * $qty;
+                    $total   += $subtotal;
+                    $items[]  = [
+                        'product'        => $product,
+                        'quantity'       => $qty,
+                        'price_at_order' => $product->price,
+                    ];
+                }
+
+                $order = Order::create([
+                    'order_code'     => Order::generateCode(),
+                    'buyer_id'       => $user->id,
+                    'store_id'       => $storeData['store_id'],
+                    'payment_method' => $request->payment_method,
+                    'total_price'    => $total,
+                    'status'         => 'pending',
+                ]);
+
+                foreach ($items as $item) {
+                    OrderItem::create([
+                        'order_id'       => $order->id,
+                        'product_id'     => $item['product']->id,
+                        'quantity'       => $item['quantity'],
+                        'price_at_order' => $item['price_at_order'],
+                    ]);
+                }
+
+                $qrContent = json_encode([
+                    'order_code' => $order->order_code,
+                    'store_id'   => $order->store_id,
+                    'total'      => $order->total_price,
+                    'buyer'      => $user->name,
+                ]);
+
+                $qrPath = 'qrcodes/' . $order->order_code . '.svg';
+                Storage::disk('public')->put($qrPath, QrCode::format('svg')->size(300)->errorCorrection('H')->generate($qrContent));
+                $order->update(['qr_path' => $qrPath]);
+
+                $orderIds[] = $order->id;
+            }
+
+            session()->forget('cart');
+            session()->put('bulk_order_ids', $orderIds);
+        });
+
+        $orderIds = session()->get('bulk_order_ids', []);
+
+        // Kalau hanya 1 toko, langsung ke QR page
+        if (count($orderIds) === 1) {
+            return redirect()->route('buyer.orders.qr', $orderIds[0]);
+        }
+
+        // Kalau lebih dari 1, ke halaman orders dengan pesan sukses
+        return redirect()->route('buyer.orders')
+            ->with('success', count($orderIds) . ' pesanan dari ' . count($orderIds) . ' toko berhasil dibuat! Lihat QR Code di bawah.');
+    }
 }
