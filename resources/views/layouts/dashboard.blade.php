@@ -42,9 +42,15 @@
   {{-- MAIN CONTENT --}}
   <div class="main-content">
     <div class="topbar">
-      <div class="topbar-title">
-        <h2>@yield('page-title', 'Dashboard')</h2>
-        <p>@yield('page-subtitle', '')</p>
+      <div style="display:flex;align-items:center;gap:12px">
+        {{-- Hamburger untuk mobile --}}
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()" style="display:none;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:white;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:1.1rem;align-items:center;justify-content:center">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-title">
+          <h2>@yield('page-title', 'Dashboard')</h2>
+          <p>@yield('page-subtitle', '')</p>
+        </div>
       </div>
       <div class="topbar-actions">
         <div class="topbar-notif"><i class="fas fa-bell"></i></div>
@@ -82,7 +88,16 @@
   </div>
 
 </div>
+<div class="sidebar-overlay" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99;backdrop-filter:blur(4px)"></div>
 <script src="{{ asset('js/app.js') }}"></script>
+<script>
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+}
+</script>
 @stack('scripts')
 </body>
 </html>
